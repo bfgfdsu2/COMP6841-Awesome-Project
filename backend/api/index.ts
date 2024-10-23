@@ -27,7 +27,7 @@ app.get('/echo', (req: Request, res: Response) => {
 app.use(errorHandler());
 
 const server = app.listen(PORT, HOST, () => {
-console.log(`Server started on port ${PORT} at ${HOST}`);
+  console.log(`Server started on port ${PORT} at ${HOST}`);
 });
 
 process.on('SIGINT', () => {
