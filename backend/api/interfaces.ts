@@ -5,33 +5,56 @@ export interface User {
     password: string,
     nameFirst: string,
     nameLast: string,
-    token: string
+    nickName: string,
 }
 
-interface Message {
+export interface EncryptedMessage {
+    encryptedMessage: string,
+    iv: string,
+    authTag: string,
+}
+
+export interface Message {
     messageId: number;
     uId: number;
     dmId: number;
-    message: string;
+    encryptedMessage: string;
     timeSent: number;
+    iv: string,
+    authTag: string,
 }
 
-interface Member {
+export interface MessageList {
+    messageEncryptedData: Message[],
+    sessionKey: string,
+    start: number,
+    end: number,
+}
+
+export interface Member {
     uId: number;
-    email: string;
-    nameFirst: string;
-    nameLast: string;
+    nickname: string;
 }
 
-interface Dm {
+export interface Dm {
     dmId: number;
     dmName: string;
-    messages: Message[];
+    messageIds: number[];
     members: Member[];
 }
 
+export interface LiveUser {
+    uId: number,
+    email: string,
+    password: string,
+    token: string | null,
+    nickName: string,
+    userIdDmWith: number[],
+    publicKey: string
+}
+
 export interface Data {
-    users: User[];
+    users: LiveUser[];
     messagesId: number[];
     dms: Dm[];
 }
