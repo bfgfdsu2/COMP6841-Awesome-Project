@@ -5,7 +5,8 @@ import errorHandler from 'middleware-http-errors';
 
 import config from './config.json';
 import { authLogin, authLogout, authRegister } from './auth';
-import { dmCreate } from './dm';
+import { dmCreate, messagesList } from './dm';
+import { messageSend } from './messages';
 
 const app = express();
 const PORT: number = parseInt(process.env.PORT || config.port);
@@ -24,7 +25,7 @@ app.get('/echo', (req: Request, res: Response) => {
   res.json('Invoice Innovators\'s API is running😍😍');
 });
 
-app.post('/cryptochat/auth/register', (req: Request, res: Response) => {
+app.post('  ', (req: Request, res: Response) => {
   const { email, password, nameFirst, nameLast } = req.body;
   res.json(authRegister(email, password, nameFirst, nameLast));
 });
@@ -46,6 +47,24 @@ app.post('/cryptochat/dm/create', (req: Request, res: Response) => {
   const token: any = req.header('token');
   const { uId, memberId } = req.body;
   res.json(dmCreate(token, uId, memberId));
+});
+
+app.get('/cryptochat/dm/messages/', (req: Request, res: Response, next) => {
+  const token: any = req.header('token');
+  const uId = parseInt(req.query.uId as string);
+  const dmId = parseInt(req.query.dmId as string);
+  const start = parseInt(req.query.start as string);
+
+  res.json(messagesList(token, uId, dmId, start));
+});
+
+// ================================MESSAGE==================================== //
+
+app.post('/cryptochat/message/send', (req: Request, res: Response, next) => {
+  const token: any = req.header('token');
+  const { uId, dmId, messageInfo } = req.body;
+
+  res.json(messageSend(token, uId, dmId, messageInfo));
 });
 
 // ========================================================================= //
