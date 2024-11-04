@@ -15,11 +15,12 @@ export interface EncryptedMessage {
 }
 
 export interface Message {
-    messageId: number;
+    messageId: number,
     uId: number;
+    nickname: string,
     dmId: number;
-    encryptedMessage: string;
-    timeSent: number;
+    encryptedMessage: string,
+    timeSent: number,
     iv: string,
     authTag: string,
 }
@@ -29,6 +30,11 @@ export interface MessageList {
     sessionKey: string,
     start: number,
     end: number,
+}
+
+export interface UserList {
+    uId: number,
+    nickname: string,
 }
 
 export interface Member {

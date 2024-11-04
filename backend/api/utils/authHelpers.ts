@@ -1,5 +1,5 @@
 import validator from 'validator';
-import crypto from 'crypto';
+import bcrypt from 'bcrypt';
 import HTTPError from 'http-errors';
 import { Data } from '../interfaces';
 
@@ -9,10 +9,13 @@ export function generateToken(): string {
   return tokenStr;
 }
 
-export function hashPassword(password: string, key: Buffer): string {
-  const hash = crypto.createHash('sha256');
-  hash.update(key + password);
-  return hash.digest('hex');
+export async function hashPassword(password: string): Promise<string> {
+  const saltRounds = 12; // Higher rounds increase the hashing time, enhancing security
+  return await bcrypt.hash(password, saltRounds);
+}
+
+export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  return await bcrypt.compare(password, hash);
 }
 
 export function validateEmail(email: string, data: Data): void {

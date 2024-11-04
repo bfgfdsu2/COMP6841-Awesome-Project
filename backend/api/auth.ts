@@ -1,12 +1,12 @@
 import { Data, User, LiveUser } from './interfaces';
-import { setData, getData, encrypt, saveUser, generateKeyPair } from './dataHandler';
+import { setData, getData, encrypt, saveUser } from './dataHandler';
 import { isLiveUser } from './utils/interfaceChecker';
 import HTTPError from 'http-errors';
 import { randomBytes } from 'crypto';
 
 import {
-  generateToken, hashPassword,
   validateEmail, validateName, validatePassword,
+  generateToken, hashPassword, verifyPassword,
 } from './utils/authHelpers';
 
 import {
@@ -17,12 +17,12 @@ import {
 
 // ========================================================================= //
 
-function authRegister(
+async function authRegister(
   email: string,
   password: string,
   nameFirst: string,
   nameLast: string
-): { uId: number } {
+): Promise<{ uId: number }> {
   const data: Data = getData();
 
   // Valdating all the information
@@ -35,10 +35,12 @@ function authRegister(
   const secretKey = randomBytes(32);
   const nickName: string = nameFirst + ' ' + nameLast;
 
+  const hashedPassword = await hashPassword(password);
+
   const newUser: User = {
     uId: id,
     email: email,
-    password: hashPassword(password, secretKey),
+    password: hashedPassword,
     nameFirst: nameFirst,
     nameLast: nameLast,
     nickName: nickName,
@@ -48,17 +50,15 @@ function authRegister(
   const encryptedUser = encrypt(newUser, secretKey);
   saveUser(newUser.uId, encryptedUser);
 
-  const { publicKey } = generateKeyPair();
-
   // Keeping some simple live data for checking efficiency
   const liveUser: LiveUser = {
     uId: newUser.uId,
     email: newUser.email,
-    password: hashPassword(password, secretKey),
+    password: hashedPassword,
     token: null,
     nickName: nickName,
     userIdDmWith: [],
-    publicKey: publicKey,
+    publicKey: 'defaultPublicKey',
   };
 
   // Update live data
@@ -70,7 +70,7 @@ function authRegister(
 
 // ========================================================================= //
 
-function authLogin(email: string, password: string): { token: string, uId: number } {
+async function authLogin(email: string, password: string): Promise<{ token: string; uId: number; }> {
   const user: LiveUser | undefined = getUserByEmail(email);
 
   if (!user || !isLiveUser(user)) {
@@ -79,7 +79,11 @@ function authLogin(email: string, password: string): { token: string, uId: numbe
 
   const userKey: Buffer = getUserKeyFromStorage(user.uId);
 
-  if (user.password !== hashPassword(password, userKey)) {
+  const hashedPassword = await hashPassword(password);
+  console.log(hashedPassword);
+
+  const isCorrectPassword = await verifyPassword(password, user.password);
+  if (isCorrectPassword === false) {
     throw HTTPError(400, 'Invalid password');
   }
 
@@ -92,6 +96,36 @@ function authLogin(email: string, password: string): { token: string, uId: numbe
 
   return { token: token, uId: user.uId };
 }
+
+// async function authLogin(email: string, password: string): Promise<{ token: string; uId: number; }> {
+//   try {
+//     const user: LiveUser | undefined = getUserByEmail(email);
+
+//     if (!user || !isLiveUser(user)) {
+//       throw HTTPError(400, 'Invalid email');
+//     }
+
+//     const userKey: Buffer = getUserKeyFromStorage(user.uId);
+
+//     const hashedPassword = await hashPassword(password);
+
+//     if (user.password !== hashedPassword) {
+//       throw HTTPError(400, 'Invalid password');
+//     }
+
+//     const token = generateToken();
+//     const hashedToken = generateHash(token, userKey);
+//     const data: Data = getData();
+//     const userIndex: number = data.users.findIndex(u => u.email === email);
+//     data.users[userIndex].token = hashedToken;
+//     setData(data);
+
+//     return { token: token, uId: user.uId };
+//   } catch (error) {
+//     console.error('Error in authLogin:', error);
+//     throw error; // rethrow to handle in the main express error handler
+//   }
+// }
 
 // ========================================================================= //
 
@@ -117,4 +151,28 @@ function authLogout(token: string, uId: number): Record<string, never> {
   return {};
 }
 
-export { authRegister, authLogin, authLogout };
+// ========================================================================= //
+
+function authUpdatePubKey(token: string, uId: number, pubKey: string): Record<string, never> {
+  const user: LiveUser | undefined = getUserbyId(uId);
+
+  if (!user || !isLiveUser(user)) {
+    throw HTTPError(403, 'Invalid uId section');
+  }
+
+  const userKey: Buffer = getUserKeyFromStorage(user.uId);
+  const hashedToken = generateHash(token, userKey);
+
+  if (user.token !== hashedToken) {
+    throw HTTPError(403, 'Invalid token');
+  }
+
+  const liveData: Data = getData();
+  const userIndex: number = liveData.users.findIndex(u => u.uId === user.uId);
+  liveData.users[userIndex].publicKey = pubKey;
+  setData(liveData);
+
+  return {};
+}
+
+export { authRegister, authLogin, authLogout, authUpdatePubKey };
