@@ -1,0 +1,25 @@
+{
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "tsc": "tsc --project tsconfig.json",
+    "lint": "eslint src/**/*.{ts,js}",
+    "lint-fix": "eslint --fix src/**/*.{ts,js}",
+    "ts-node": "ts-node"
+  },
+  "dependencies": {
+    "axios": "^1.5.0",
+    "irc-framework": "^4.14.0",
+    "readline-sync": "^1.4.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.8.6",
+    "@typescript-eslint/eslint-plugin": "^8.11.0",
+    "@typescript-eslint/parser": "^8.11.0",
+    "eslint": "^9.13.0",
+    "eslint-plugin-jest": "^28.8.3",
+    "tsx": "^4.19.2"
+  }
+}
